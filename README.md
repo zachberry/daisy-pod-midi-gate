@@ -42,4 +42,4 @@ A MIDI-Controlled hard on/off audio gate
 
 ## Video
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/v5GjT15CzVs?si=WiE4vFsy4FD-92G4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+[YouTube Video](https://www.youtube.com/watch?v=v5GjT15CzVs)

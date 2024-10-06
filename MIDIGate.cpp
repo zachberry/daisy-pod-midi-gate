@@ -1,25 +1,3 @@
-// To build: CMD+P, type "task build_all"
-
-// To burn onto Daisy (using vscode):
-// 1. Connect micro-usb cable to Daisy (on the raised board, not the main board)
-// 2. Put the Dasiy in firmware-flash mode:
-//      a. Press and hold the BOOT button on the raised board
-//      b. Press and release the RESET button on the raised board
-//      c. You should see the flashing LED stop flashing
-// 3. CMD+P, type "task build_and_program_dfu"
-
-// To burn onto Daisy (using the web):
-// 1. Connect micro-usb cable to Daisy (on the raised board, not the main board)
-// 2. Put the Dasiy in firmware-flash mode:
-//      a. Press and hold the BOOT button on the raised board
-//      b. Press and release the RESET button on the raised board
-//      c. You should see the flashing LED stop flashing
-// 3. Go to https://electro-smith.github.io/Programmer/
-// 4. Click "Connect"
-// 5. Select "DFU in FS mode" from the options
-// 6. Click "Choose File" and select the .bin file you want to burn
-// 7. Once completed, press the RESET button on the raised board
-
 #include "daisy_pod.h"
 #include "daisysp.h"
 #include <stdio.h>
@@ -48,10 +26,6 @@ Mode        mode          = BOOT;
 bool        isBypassed    = false;
 int         targetChannel = 1;
 uint8_t     targetNote    = 60;
-// static AdEnv env;
-
-// uint32_t    hackyCounter = 0;
-
 
 void OpenGate()
 {
@@ -79,19 +53,11 @@ void CloseGate()
     }
 
     isGateOpen = false;
-    // env.Trigger();
 }
 
 void SetMode(Mode m)
 {
     mode = m;
-
-    // switch(m)
-    // {
-    //     case GATE: CloseGate(); break;
-    //     case MIDI_LEARN: break;
-    //     case BOOT: break;
-    // }
 }
 
 void CommitMIDINote(int channel, uint8_t note)
@@ -130,6 +96,7 @@ void ReadControls()
         }
     }
 
+    // Read the encoder button (to toggle bypass)
     if(hw.encoder.RisingEdge())
     {
         isBypassed = !isBypassed;
