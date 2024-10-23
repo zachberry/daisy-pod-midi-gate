@@ -27,6 +27,7 @@ bool        isBypassed         = false;
 int         targetChannel      = 1;
 uint8_t     targetNote         = 60;
 bool        shouldSaveSettings = false;
+float       ledBrightness      = 1.0f;
 
 struct Settings
 {
@@ -115,6 +116,9 @@ void ReadControls()
     // Read the first knob (how long to keep the gate open for when triggered)
     float k1   = hw.knob1.Process();
     gateOpenMs = k1 * MAX_GATE_OPEN_MS;
+
+    // Read the second knob (to adjust the LED brightness)
+    ledBrightness = 0.1f + (hw.knob2.Process() * 0.9f);
 
     // Read the button (to test-trigger the gate open)
     if(hw.button1.RisingEdge())
@@ -222,17 +226,17 @@ void UpdateLEDs()
         {
             if(isBypassed)
             {
-                hw.led1.Set(1.0f, 0, 0);
-                hw.led2.Set(1.0f, 0, 0);
+                hw.led1.Set(ledBrightness, 0, 0);
+                hw.led2.Set(ledBrightness, 0, 0);
             }
             else if(isGateOpen)
             {
-                hw.led1.Set(0, 1.0f, 0);
+                hw.led1.Set(0, ledBrightness, 0);
                 hw.led2.Set(0, 0, 0);
             }
             else
             {
-                hw.led1.Set(1.0f, 0, 0);
+                hw.led1.Set(ledBrightness, 0, 0);
                 hw.led2.Set(0, 0, 0);
             }
         }
@@ -240,8 +244,8 @@ void UpdateLEDs()
 
         case MIDI_LEARN:
         {
-            hw.led1.Set(0, 0, 1.0f);
-            hw.led2.Set(0, 0, 1.0f);
+            hw.led1.Set(0, 0, ledBrightness);
+            hw.led2.Set(0, 0, ledBrightness);
         }
         break;
 
