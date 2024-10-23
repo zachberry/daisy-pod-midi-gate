@@ -22,10 +22,48 @@ bool        isGateOpen = true;
 float       gateOpenMs = 100.0f;
 uint32_t    freq;
 uint32_t    lastTime;
-Mode        mode          = BOOT;
-bool        isBypassed    = false;
-int         targetChannel = 1;
-uint8_t     targetNote    = 60;
+Mode        mode               = BOOT;
+bool        isBypassed         = false;
+int         targetChannel      = 1;
+uint8_t     targetNote         = 60;
+bool        shouldSaveSettings = false;
+
+struct Settings
+{
+    int     targetChannel;
+    uint8_t targetNote;
+
+    //Overloading the != operator
+    //This is necessary as this operator is used in the PersistentStorage source code
+    bool operator!=(const Settings &a) const
+    {
+        return a.targetChannel != targetChannel || a.targetNote != targetNote;
+    }
+};
+
+//https://forum.electro-smith.com/t/saving-values-to-flash-memory-using-persistentstorage-class-on-daisy-pod/4306
+//Persistent Storage Declaration. Using type Settings and passed the devices qspi handle
+PersistentStorage<Settings> SavedSettings(hw.seed.qspi);
+
+void Save()
+{
+    //Reference to local copy of settings stored in flash
+    Settings &LocalSettings = SavedSettings.GetSettings();
+
+    LocalSettings.targetChannel = targetChannel;
+    LocalSettings.targetNote    = targetNote;
+
+    shouldSaveSettings = true;
+}
+
+void Load()
+{
+    //Reference to local copy of settings stored in flash
+    Settings &LocalSettings = SavedSettings.GetSettings();
+
+    targetChannel = LocalSettings.targetChannel;
+    targetNote    = LocalSettings.targetNote;
+}
 
 void OpenGate()
 {
@@ -65,6 +103,7 @@ void CommitMIDINote(int channel, uint8_t note)
     targetChannel = channel;
     targetNote    = note;
 
+    Save();
     SetMode(GATE);
 }
 
@@ -228,6 +267,14 @@ int main(void)
     timerConfig.dir    = TimerHandle::Config::CounterDir::UP;
     timer.Init(timerConfig);
 
+    //Initilize the PersistentStorage Object with default values.
+    //Defaults will be the first values stored in flash when the device is first turned on.
+    //They can also be restored at a later date using the RestoreDefaults method
+    Settings DefaultSettings = {1, 60};
+    SavedSettings.Init(DefaultSettings);
+
+    Load();
+
     hw.StartAdc();
     hw.StartAudio(AudioCallback);
     hw.midi.StartReceive();
@@ -248,5 +295,13 @@ int main(void)
         UpdateGate();
 
         UpdateLEDs();
+
+        if(shouldSaveSettings)
+        {
+            SavedSettings.Save();
+            shouldSaveSettings = false;
+
+            System::Delay(100);
+        }
     }
 }
