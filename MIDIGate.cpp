@@ -22,10 +22,49 @@ bool        isGateOpen = true;
 float       gateOpenMs = 100.0f;
 uint32_t    freq;
 uint32_t    lastTime;
-Mode        mode          = BOOT;
-bool        isBypassed    = false;
-int         targetChannel = 1;
-uint8_t     targetNote    = 60;
+Mode        mode               = BOOT;
+bool        isBypassed         = false;
+int         targetChannel      = 1;
+uint8_t     targetNote         = 60;
+bool        shouldSaveSettings = false;
+float       ledBrightness      = 1.0f;
+
+struct Settings
+{
+    int     targetChannel;
+    uint8_t targetNote;
+
+    //Overloading the != operator
+    //This is necessary as this operator is used in the PersistentStorage source code
+    bool operator!=(const Settings &a) const
+    {
+        return a.targetChannel != targetChannel || a.targetNote != targetNote;
+    }
+};
+
+//https://forum.electro-smith.com/t/saving-values-to-flash-memory-using-persistentstorage-class-on-daisy-pod/4306
+//Persistent Storage Declaration. Using type Settings and passed the devices qspi handle
+PersistentStorage<Settings> SavedSettings(hw.seed.qspi);
+
+void Save()
+{
+    //Reference to local copy of settings stored in flash
+    Settings &LocalSettings = SavedSettings.GetSettings();
+
+    LocalSettings.targetChannel = targetChannel;
+    LocalSettings.targetNote    = targetNote;
+
+    shouldSaveSettings = true;
+}
+
+void Load()
+{
+    //Reference to local copy of settings stored in flash
+    Settings &LocalSettings = SavedSettings.GetSettings();
+
+    targetChannel = LocalSettings.targetChannel;
+    targetNote    = LocalSettings.targetNote;
+}
 
 void OpenGate()
 {
@@ -65,6 +104,7 @@ void CommitMIDINote(int channel, uint8_t note)
     targetChannel = channel;
     targetNote    = note;
 
+    Save();
     SetMode(GATE);
 }
 
@@ -76,6 +116,9 @@ void ReadControls()
     // Read the first knob (how long to keep the gate open for when triggered)
     float k1   = hw.knob1.Process();
     gateOpenMs = k1 * MAX_GATE_OPEN_MS;
+
+    // Read the second knob (to adjust the LED brightness)
+    ledBrightness = 0.1f + (hw.knob2.Process() * 0.9f);
 
     // Read the button (to test-trigger the gate open)
     if(hw.button1.RisingEdge())
@@ -183,17 +226,17 @@ void UpdateLEDs()
         {
             if(isBypassed)
             {
-                hw.led1.Set(1.0f, 0, 0);
-                hw.led2.Set(1.0f, 0, 0);
+                hw.led1.Set(ledBrightness, 0, 0);
+                hw.led2.Set(ledBrightness, 0, 0);
             }
             else if(isGateOpen)
             {
-                hw.led1.Set(0, 1.0f, 0);
+                hw.led1.Set(0, ledBrightness, 0);
                 hw.led2.Set(0, 0, 0);
             }
             else
             {
-                hw.led1.Set(1.0f, 0, 0);
+                hw.led1.Set(ledBrightness, 0, 0);
                 hw.led2.Set(0, 0, 0);
             }
         }
@@ -201,8 +244,8 @@ void UpdateLEDs()
 
         case MIDI_LEARN:
         {
-            hw.led1.Set(0, 0, 1.0f);
-            hw.led2.Set(0, 0, 1.0f);
+            hw.led1.Set(0, 0, ledBrightness);
+            hw.led2.Set(0, 0, ledBrightness);
         }
         break;
 
@@ -228,6 +271,14 @@ int main(void)
     timerConfig.dir    = TimerHandle::Config::CounterDir::UP;
     timer.Init(timerConfig);
 
+    //Initilize the PersistentStorage Object with default values.
+    //Defaults will be the first values stored in flash when the device is first turned on.
+    //They can also be restored at a later date using the RestoreDefaults method
+    Settings DefaultSettings = {1, 60};
+    SavedSettings.Init(DefaultSettings);
+
+    Load();
+
     hw.StartAdc();
     hw.StartAudio(AudioCallback);
     hw.midi.StartReceive();
@@ -248,5 +299,13 @@ int main(void)
         UpdateGate();
 
         UpdateLEDs();
+
+        if(shouldSaveSettings)
+        {
+            SavedSettings.Save();
+            shouldSaveSettings = false;
+
+            System::Delay(100);
+        }
     }
 }

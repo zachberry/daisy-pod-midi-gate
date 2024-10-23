@@ -25,20 +25,22 @@ A MIDI-Controlled hard on/off audio gate
 | Button 1       | Manually trigger gate  |
 | Button 2       | Toggle MIDI Learn mode |
 | Knob 1         | Gate open time         |
-| Knob 2         | (Unused)               |
+| Knob 2         | LED brightness         |
 | Encoder Button | Toggle bypass          |
 | Encoder        | (Unused)               |
 
 ## Operation
 
 1. Connect a MIDI device to the Daisy Pod
-1. Press Knob 2 on the Daisy Pod to enter **MIDI Learn mode**. You should see the two LEDs turn blue.
+1. Press Button 2 on the Daisy Pod to enter **MIDI Learn mode**. You should see the two LEDs turn blue.
 1. Press a note on your MIDI device to send a Note On event to the Daisy Pod. The blue LEDs should turn off if the note is received - the specific note number and channel will be saved - and the Daisy Pod will now be in **gate mode**. Alternately, you can press Button 2 again to exit MIDI Learn mode without saving a note.
 1. In **gate mode**, the first LED will glow red (the second LED will remain dark). Sending the saved note (with the velocity set to anything greater than zero) the trigger the gate to open, causing the led to glow green, and the audio coming into the line input will be repeated to the line output. The gate will close after the gate open time has elapsed, at which point the output will be muted. At any time in **gate mode** you can press Button 1 to manually trigger the gate.
 1. Turn Knob 1 to adjust the gate open time - turn the knob clockwise to increase the open item.
 1. Press the Encoder down to enable bypass. When bypass is active the gate will always be open (or in other words, the incoming audio will be repeated on the output), and both LEDs will glow red. Press the Encoder again to disable bypass.
 
 > Note: The gate is also left open whenever you are in MIDI Learn Mode
+
+> Note: LEDs too bright or too dim? Turn Knob 2 to adjust the brightness of the LEDs
 
 ## Video
 
